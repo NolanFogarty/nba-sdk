@@ -1,0 +1,90 @@
+{
+  "meta": {
+    "version": 1,
+    "request": "https://stats.nba.com/stats/playbyplayv3?GameID=0022400001",
+    "time": "2024-10-22 23:00:00.000",
+    "code": 200
+  },
+  "game": {
+    "gameId": "0022400001",
+    "actions": [
+      {
+        "actionNumber": 2,
+        "clock": "PT12M00.00S",
+        "period": 1,
+        "periodType": "REGULAR",
+        "teamId": 0,
+        "teamTricode": "",
+        "personId": 0,
+        "playerName": "",
+        "playerNameI": "",
+        "scoreHome": "0",
+        "scoreAway": "0",
+        "description": "Period Start",
+        "actionType": "period",
+        "subType": "start",
+        "orderNumber": 20000
+      },
+      {
+        "actionNumber": 4,
+        "clock": "PT11M45.00S",
+        "period": 1,
+        "periodType": "REGULAR",
+        "teamId": 1610612747,
+        "teamTricode": "LAL",
+        "personId": 2544,
+        "playerName": "James",
+        "playerNameI": "L. James",
+        "xLegacy": 12,
+        "yLegacy": 245,
+        "shotDistance": 24.5,
+        "shotResult": "Made",
+        "isFieldGoal": 1,
+        "scoreHome": "3",
+        "scoreAway": "0",
+        "pointsTotal": 3,
+        "description": "James 24' 3PT Jump Shot (3 PTS)",
+        "actionType": "Made Shot",
+        "subType": "Jump Shot",
+        "qualifiers": ["3pt"],
+        "orderNumber": 40000
+      },
+      {
+        "actionNumber": 6,
+        "clock": "PT11M22.00S",
+        "period": 1,
+        "periodType": "REGULAR",
+        "teamId": 1610612738,
+        "teamTricode": "BOS",
+        "personId": 1628369,
+        "playerName": "Tatum",
+        "playerNameI": "J. Tatum",
+        "xLegacy": -8,
+        "yLegacy": 90,
+        "shotDistance": 9.0,
+        "shotResult": "Made",
+        "isFieldGoal": 1,
+        "scoreHome": "3",
+        "scoreAway": "2",
+        "pointsTotal": 2,
+        "description": "Tatum 9' Driving Layup (2 PTS)",
+        "actionType": "Made Shot",
+        "subType": "Driving Layup",
+        "orderNumber": 60000
+      },
+      {
+        "actionNumber": 800,
+        "clock": "PT00M00.00S",
+        "period": 4,
+        "periodType": "REGULAR",
+        "teamId": 0,
+        "description": "End of 4th Period",
+        "actionType": "period",
+        "subType": "end",
+        "scoreHome": "110",
+        "scoreAway": "103",
+        "orderNumber": 8000000
+      }
+    ]
+  }
+}
