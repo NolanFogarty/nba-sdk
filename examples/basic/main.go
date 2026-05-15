@@ -30,19 +30,9 @@ func main() {
 			g.GameStatusText)
 	}
 
-	// Pick a finished game from the scoreboard if one exists (gameStatus == 3),
-	// otherwise fall back to a known finished game ID so the stats demo always
-	// has real data to fetch. stats.nba.com returns nothing for a game that
-	// hasn't tipped off yet.
-	gameID := pickFinishedGame(sb.Scoreboard.Games)
-	if gameID == "" {
-		gameID = "0022400001" // 2024-25 opening night, Knicks @ Celtics
-		fmt.Printf("\n(No finished games today — using %s for stats demo.)\n", gameID)
-	} else {
-		fmt.Printf("\nUsing finished game %s for stats demo.\n", gameID)
-	}
 
-	// Traditional box score for the first game.
+	// Traditional box score for the game.
+	gameID := "0022400001" 
 	box, err := client.Stats.BoxScoreTraditionalV3(ctx, gameID)
 	if err != nil {
 		log.Printf("box score: %v", err)
@@ -74,14 +64,4 @@ func scoreOrDash(score, status int) string {
 		return "-"
 	}
 	return fmt.Sprintf("%d", score)
-}
-
-// pickFinishedGame returns the first GameID with status 3 (final), or "" if none.
-func pickFinishedGame(games []live.Game) string {
-	for _, g := range games {
-		if g.GameStatus == 3 {
-			return g.GameID
-		}
-	}
-	return ""
 }
