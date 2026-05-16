@@ -8,7 +8,6 @@ import (
 	"time"
 
 	nba "github.com/NolanFogarty/nba-sdk"
-	"github.com/NolanFogarty/nba-sdk/live"
 )
 
 func main() {
