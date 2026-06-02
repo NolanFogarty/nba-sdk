@@ -29,7 +29,6 @@ func main() {
 			g.GameStatusText)
 	}
 
-
 	// Look up the games played on a past date to resolve a game ID. Unlike
 	// the live scoreboard above, ScoreboardV2 works for any date.
 	gameID := "0022400001" // fallback if the date lookup returns nothing
