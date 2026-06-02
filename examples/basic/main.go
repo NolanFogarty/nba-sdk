@@ -30,8 +30,23 @@ func main() {
 	}
 
 
-	// Traditional box score for the game.
-	gameID := "0022400001" 
+	// Look up the games played on a past date to resolve a game ID. Unlike
+	// the live scoreboard above, ScoreboardV2 works for any date.
+	gameID := "0022400001" // fallback if the date lookup returns nothing
+	day, err := client.Stats.ScoreboardV2(ctx, "2024-12-25")
+	if err != nil {
+		log.Printf("scoreboardV2: %v", err)
+	} else {
+		fmt.Printf("\nGames on %s:\n", day.Parameters.GameDate)
+		for _, g := range day.Games {
+			fmt.Printf("  %s (game %s) — %s\n", g.GameCode, g.GameID, g.GameStatusText)
+		}
+		if len(day.Games) > 0 {
+			gameID = day.Games[0].GameID
+		}
+	}
+
+	// Traditional box score for the resolved game.
 	box, err := client.Stats.BoxScoreTraditionalV3(ctx, gameID)
 	if err != nil {
 		log.Printf("box score: %v", err)
