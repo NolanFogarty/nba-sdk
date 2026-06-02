@@ -44,6 +44,7 @@ func main() {
 Two sub-clients:
 
 - `client.Stats.*` — stats.nba.com endpoints
+  - `ScoreboardV2(ctx, date)` — every game on a given date (`"YYYY-MM-DD"`), including past dates; use it to resolve game IDs for historical games
   - `BoxScoreTraditionalV3(ctx, gameID)` — full-game traditional box score
   - `PlayByPlayV3(ctx, gameID)` — every play-by-play action for the game
 - `client.Live.*` — cdn.nba.com endpoints
