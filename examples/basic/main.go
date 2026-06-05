@@ -16,12 +16,13 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	// Today's scoreboard.
+	// Today's scoreboard from the CDN. NBA's "today" rolls over on its own
+	// schedule and may show yesterday's slate for several hours.
 	sb, err := client.Live.Scoreboard(ctx)
 	if err != nil {
-		log.Fatalf("scoreboard: %v", err)
+		log.Fatalf("live scoreboard: %v", err)
 	}
-	fmt.Printf("Games on %s:\n", sb.Scoreboard.GameDate)
+	fmt.Printf("Live scoreboard for %s:\n", sb.Scoreboard.GameDate)
 	for _, g := range sb.Scoreboard.Games {
 		fmt.Printf("  %s %s @ %s %s — %s\n",
 			g.AwayTeam.TeamTricode, scoreOrDash(g.AwayTeam.Score, g.GameStatus),
@@ -29,19 +30,35 @@ func main() {
 			g.GameStatusText)
 	}
 
-	// Look up the games played on a past date to resolve a game ID. Unlike
-	// the live scoreboard above, ScoreboardV2 works for any date.
-	gameID := "0022400001" // fallback if the date lookup returns nothing
-	day, err := client.Stats.ScoreboardV2(ctx, "2024-12-25")
+	// Stats v3 scoreboard for an explicit date — bypasses the CDN's "today"
+	// quirk. Pass time.Now() to force the real current calendar day.
+	today, err := client.Stats.ScoreboardV3(ctx, time.Now())
 	if err != nil {
-		log.Printf("scoreboardV2: %v", err)
+		log.Printf("scoreboardV3: %v", err)
 	} else {
-		fmt.Printf("\nGames on %s:\n", day.Parameters.GameDate)
-		for _, g := range day.Games {
+		fmt.Printf("\nStats v3 scoreboard for %s:\n", today.Scoreboard.GameDate)
+		for _, g := range today.Scoreboard.Games {
+			fmt.Printf("  %s %s @ %s %s — %s\n",
+				g.AwayTeam.TeamTricode, scoreOrDash(g.AwayTeam.Score, g.GameStatus),
+				g.HomeTeam.TeamTricode, scoreOrDash(g.HomeTeam.Score, g.GameStatus),
+				g.GameStatusText)
+		}
+	}
+
+	// Look up games played on a past date to resolve a game ID. ScoreboardV3
+	// accepts any calendar day — past, present, or future.
+	gameID := "0022400001" // fallback if the date lookup returns nothing
+	pastDate := time.Date(2024, 12, 25, 0, 0, 0, 0, time.UTC)
+	day, err := client.Stats.ScoreboardV3(ctx, pastDate)
+	if err != nil {
+		log.Printf("scoreboardV3 (past date): %v", err)
+	} else {
+		fmt.Printf("\nGames on %s:\n", day.Scoreboard.GameDate)
+		for _, g := range day.Scoreboard.Games {
 			fmt.Printf("  %s (game %s) — %s\n", g.GameCode, g.GameID, g.GameStatusText)
 		}
-		if len(day.Games) > 0 {
-			gameID = day.Games[0].GameID
+		if len(day.Scoreboard.Games) > 0 {
+			gameID = day.Scoreboard.Games[0].GameID
 		}
 	}
 

@@ -5,12 +5,12 @@
 // Endpoints exercised:
 //
 //	Live  (cdn.nba.com)     — Scoreboard, BoxScore, PlayByPlay
-//	Stats (stats.nba.com)   — ScoreboardV2, BoxScoreTraditionalV3, PlayByPlayV3
+//	Stats (stats.nba.com)   — ScoreboardV3, BoxScoreTraditionalV3, PlayByPlayV3
 //
 // Game-ID resolution:
 //
 //   - The stats.* endpoints work for any historical game, so we resolve a
-//     real game ID from ScoreboardV2 for a fixed past date.
+//     real game ID from ScoreboardV3 for a fixed past date.
 //   - The live.* CDN endpoints only return data for games that are in
 //     progress or very recently finished. We pick a live game from today's
 //     scoreboard if one exists; otherwise we still attempt the call against
@@ -35,14 +35,12 @@ import (
 	"github.com/NolanFogarty/nba-sdk/stats"
 )
 
-const (
-	// pastDate is any date with a full slate of completed games; used to
-	// resolve a real historical game ID for the stats.* endpoints.
-	pastDate = "2024-12-25"
+// fallbackGameID is used if the date lookup returns nothing.
+const fallbackGameID = "0022400001"
 
-	// fallbackGameID is used if the date lookup returns nothing.
-	fallbackGameID = "0022400001"
-)
+// pastDate is any date with a full slate of completed games; used to
+// resolve a real historical game ID for the stats.* endpoints.
+var pastDate = time.Date(2024, 12, 25, 0, 0, 0, 0, time.UTC)
 
 func main() {
 	client := nba.NewClient(
@@ -94,15 +92,15 @@ func main() {
 		}
 	}
 
-	// ----- STATS: scoreboard v2 -----------------------------------------
-	header("STATS client.Stats.ScoreboardV2(ctx, date)")
+	// ----- STATS: scoreboard v3 -----------------------------------------
+	header("STATS client.Stats.ScoreboardV3(ctx, date)")
 	gameID := fallbackGameID
-	if day, err := client.Stats.ScoreboardV2(ctx, pastDate); err != nil {
-		log.Printf("scoreboardV2: %v", err)
+	if day, err := client.Stats.ScoreboardV3(ctx, pastDate); err != nil {
+		log.Printf("scoreboardV3: %v", err)
 	} else {
-		printScoreboardV2(day)
-		if len(day.Games) > 0 {
-			gameID = day.Games[0].GameID
+		printScoreboardV3(day)
+		if len(day.Scoreboard.Games) > 0 {
+			gameID = day.Scoreboard.Games[0].GameID
 		}
 	}
 	fmt.Printf("\nResolved historical game ID for stats endpoints: %s\n", gameID)
@@ -459,55 +457,102 @@ func printLiveAction(a live.Action) {
 }
 
 // ===================================================================
-// STATS: ScoreboardV2
+// STATS: ScoreboardV3
 // ===================================================================
 
-func printScoreboardV2(r *stats.ScoreboardV2Response) {
-	kv(0, "resource", r.Resource)
-	fmt.Println("parameters:")
-	kv(1, "GameDate", r.Parameters.GameDate)
-	kv(1, "LeagueID", r.Parameters.LeagueID)
-	kv(1, "DayOffset", r.Parameters.DayOffset)
+func printScoreboardV3(r *stats.ScoreboardV3Response) {
+	printMetaStats(r.Meta)
+	s := r.Scoreboard
+	fmt.Println("scoreboard:")
+	kv(1, "gameDate", s.GameDate)
+	kv(1, "leagueId", s.LeagueID)
+	kv(1, "leagueName", s.LeagueName)
+	kv(1, "games", fmt.Sprintf("%d total", len(s.Games)))
 
-	// Games is the typed projection of the GameHeader result set.
-	fmt.Printf("games (typed projection of GameHeader): %d\n", len(r.Games))
-	for i := range r.Games {
-		g := &r.Games[i]
+	for i := range s.Games {
+		g := &s.Games[i]
 		fmt.Printf("  game[%d]:\n", i)
-		kv(2, "gameDateEst", g.GameDateEst)
-		kv(2, "gameSequence", g.GameSequence)
 		kv(2, "gameId", g.GameID)
-		kv(2, "gameStatusId", g.GameStatusID)
-		kv(2, "gameStatusText", g.GameStatusText)
 		kv(2, "gameCode", g.GameCode)
-		kv(2, "homeTeamId", g.HomeTeamID)
-		kv(2, "visitorTeamId", g.VisitorTeamID)
-		kv(2, "season", g.Season)
-		kv(2, "livePeriod", g.LivePeriod)
-		if i == 0 && len(r.Games) > 1 {
-			fmt.Printf("  (... %d more games, same shape ...)\n", len(r.Games)-1)
+		kv(2, "gameStatus", g.GameStatus)
+		kv(2, "gameStatusText", g.GameStatusText)
+		kv(2, "period", g.Period)
+		kv(2, "gameClock", g.GameClock)
+		kv(2, "gameTimeUTC", g.GameTimeUTC)
+		kv(2, "gameEt", g.GameEt)
+		kv(2, "regulationPeriods", g.RegulationPeriods)
+		kv(2, "seriesGameNumber", g.SeriesGameNumber)
+		kv(2, "seriesText", g.SeriesText)
+		kv(2, "seriesConference", g.SeriesConference)
+		kv(2, "poRoundDesc", g.PoRoundDesc)
+		kv(2, "gameSubtype", g.GameSubtype)
+		kv(2, "ifNecessary", g.IfNecessary)
+		fmt.Println("    awayTeam:")
+		printScoreboardV3Team(g.AwayTeam)
+		fmt.Println("    homeTeam:")
+		printScoreboardV3Team(g.HomeTeam)
+		fmt.Println("    gameLeaders:")
+		fmt.Println("      awayLeaders:")
+		printScoreboardV3Leader(g.GameLeaders.AwayLeaders)
+		fmt.Println("      homeLeaders:")
+		printScoreboardV3Leader(g.GameLeaders.HomeLeaders)
+		fmt.Println("    broadcasters:")
+		printScoreboardV3Broadcasters(g.Broadcasters)
+		if i == 0 && len(s.Games) > 1 {
+			fmt.Printf("  (... %d more games, same shape ...)\n", len(s.Games)-1)
 			break
 		}
 	}
+}
 
-	// The raw resultSets are preserved verbatim. scoreboardv2 returns many
-	// tables (GameHeader, LineScore, SeriesStandings, LastMeeting, EastConf-
-	// StandingsByDay, WestConfStandingsByDay, Available, TeamLeaders, ...).
-	// The SDK only auto-projects GameHeader; everything else you decode
-	// yourself by matching Headers to each positional row in RowSet.
-	fmt.Printf("\nresultSets (raw, %d tables — decode positionally):\n", len(r.ResultSets))
-	for _, rs := range r.ResultSets {
-		fmt.Printf("  table %q — %d columns, %d rows\n", rs.Name, len(rs.Headers), len(rs.RowSet))
-		kv(2, "headers", strings.Join(rs.Headers, ", "))
-		if len(rs.RowSet) > 0 {
-			// Decode the first row into strings just to show the values.
-			cells := make([]string, len(rs.RowSet[0]))
-			for j, c := range rs.RowSet[0] {
-				cells[j] = strings.TrimSpace(string(c))
-			}
-			kv(2, "row[0]", strings.Join(cells, " | "))
-		}
+func printScoreboardV3Team(t stats.ScoreboardV3Team) {
+	kv(3, "teamId", t.TeamID)
+	kv(3, "teamName", t.TeamName)
+	kv(3, "teamCity", t.TeamCity)
+	kv(3, "teamTricode", t.TeamTricode)
+	kv(3, "teamSlug", t.TeamSlug)
+	kv(3, "wins", t.Wins)
+	kv(3, "losses", t.Losses)
+	kv(3, "score", t.Score)
+	kv(3, "seed", t.Seed)
+	kv(3, "inBonus", t.InBonus)
+	kv(3, "timeoutsRemaining", t.TimeoutsRemaining)
+	kv(3, "periods", fmt.Sprintf("%d", len(t.Periods)))
+	for _, p := range t.Periods {
+		kv(4, fmt.Sprintf("P%d (%s)", p.Period, p.PeriodType), p.Score)
 	}
+}
+
+func printScoreboardV3Leader(l stats.ScoreboardV3Leader) {
+	kv(4, "personId", l.PersonID)
+	kv(4, "name", l.Name)
+	kv(4, "jerseyNum", l.JerseyNum)
+	kv(4, "position", l.Position)
+	kv(4, "teamTricode", l.TeamTricode)
+	kv(4, "playerSlug", l.PlayerSlug)
+	kv(4, "points", l.Points)
+	kv(4, "rebounds", l.Rebounds)
+	kv(4, "assists", l.Assists)
+}
+
+func printScoreboardV3Broadcasters(b stats.ScoreboardV3Broadcasters) {
+	printBroadcasterList(3, "nationalTv", b.NationalTvBroadcasters)
+	printBroadcasterList(3, "nationalRadio", b.NationalRadioBroadcasters)
+	printBroadcasterList(3, "homeTv", b.HomeTvBroadcasters)
+	printBroadcasterList(3, "homeRadio", b.HomeRadioBroadcasters)
+	printBroadcasterList(3, "awayTv", b.AwayTvBroadcasters)
+	printBroadcasterList(3, "awayRadio", b.AwayRadioBroadcasters)
+}
+
+func printBroadcasterList(indent int, label string, list []stats.ScoreboardV3Broadcaster) {
+	if len(list) == 0 {
+		return
+	}
+	names := make([]string, 0, len(list))
+	for _, b := range list {
+		names = append(names, b.BroadcasterDisplay)
+	}
+	kv(indent, label, strings.Join(names, ", "))
 }
 
 // ===================================================================
