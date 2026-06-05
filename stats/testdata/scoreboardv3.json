@@ -1,0 +1,68 @@
+{
+  "meta": {
+    "version": 1,
+    "request": "https://stats.nba.com/stats/scoreboardv3?GameDate=2026-06-05&LeagueID=00",
+    "time": "2026-06-05 12:00:00.000",
+    "code": 200
+  },
+  "scoreboard": {
+    "gameDate": "2026-06-05",
+    "leagueId": "00",
+    "leagueName": "National Basketball Association",
+    "games": [
+      {
+        "gameId": "0042500404",
+        "gameCode": "20260605/INDOKC",
+        "gameStatus": 1,
+        "gameStatusText": "8:30 pm ET",
+        "period": 0,
+        "gameClock": "",
+        "gameTimeUTC": "2026-06-06T00:30:00Z",
+        "gameEt": "2026-06-05T20:30:00-04:00",
+        "regulationPeriods": 4,
+        "seriesGameNumber": "Game 4",
+        "seriesText": "OKC leads 2-1",
+        "seriesConference": "NBA Finals",
+        "poRoundDesc": "Finals",
+        "ifNecessary": false,
+        "homeTeam": {
+          "teamId": 1610612760,
+          "teamName": "Thunder",
+          "teamCity": "Oklahoma City",
+          "teamTricode": "OKC",
+          "teamSlug": "thunder",
+          "wins": 2,
+          "losses": 1,
+          "score": 0,
+          "seed": 1,
+          "timeoutsRemaining": 7,
+          "periods": []
+        },
+        "awayTeam": {
+          "teamId": 1610612754,
+          "teamName": "Pacers",
+          "teamCity": "Indiana",
+          "teamTricode": "IND",
+          "teamSlug": "pacers",
+          "wins": 1,
+          "losses": 2,
+          "score": 0,
+          "seed": 4,
+          "timeoutsRemaining": 7,
+          "periods": []
+        },
+        "broadcasters": {
+          "nationalTvBroadcasters": [
+            {
+              "broadcasterScope": "natl",
+              "broadcasterMedia": "tv",
+              "broadcasterId": 10,
+              "broadcasterDisplay": "ABC",
+              "broadcasterAbbreviation": "ABC"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
