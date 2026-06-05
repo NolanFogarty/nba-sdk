@@ -45,6 +45,7 @@ Two sub-clients:
 
 - `client.Stats.*` — stats.nba.com endpoints
   - `ScoreboardV3(ctx, date)` — every game on a given calendar date (`time.Time`), including past, present, and future; use it to resolve game IDs for historical games and bypass the CDN's "today" rollover
+  - `LeagueStandingsV3(ctx, season)` — regular-season standings for the given NBA season (e.g. `"2025-26"`); one typed row per team with record, splits, streaks, point differential, clinching indicators
   - `BoxScoreTraditionalV3(ctx, gameID)` — full-game traditional box score
   - `PlayByPlayV3(ctx, gameID)` — every play-by-play action for the game
 - `client.Live.*` — cdn.nba.com endpoints
